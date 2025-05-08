@@ -24,6 +24,8 @@ from google.auth.transport.requests import Request as GoogleAuthRequest
 
 # Import Lyria function
 from lyria import generate_lyria_music
+# Import Movie Creator tab function
+from moviecreator import movie_creator_tab
 
 # --- Configuration & Constants ---
 DEFAULT_PROJECT_ID = os.getenv("DEFAULT_PROJECT_ID", "veo-testing")
@@ -202,7 +204,7 @@ local_output_dir_input = st.sidebar.text_input("Local Output Directory", value=o
 st.sidebar.header("💾 Google Drive Output (Optional)")
 drive_folder_link_input = st.sidebar.text_input("Google Drive Folder Link", value=DEFAULT_DRIVE_FOLDER_LINK_ENV)
 
-tab_names = ["Standard Veo", "Veo Interpolation", "Veo Extension", "Veo Camera Controls", "Lyria Music"]
+tab_names = ["Standard Veo", "Veo Interpolation", "Veo Extension", "Veo Camera Controls", "Lyria Music", "🎬 Movie Creator"]
 tabs = st.tabs(tab_names)
 
 gcs_client = get_gcs_client()
@@ -422,6 +424,9 @@ with tabs[4]: # Lyria Music Generation
                         upload_to_drive(drive_service, target_drive_folder_id, local_music_file)
             else:
                 st.error("Lyria music generation failed or returned no samples.")
+
+with tabs[5]: # Movie Creator Tab
+    movie_creator_tab()
 
 st.markdown("---")
 st.markdown("Ensure `gcloud auth application-default login` is done and APIs are enabled.")
