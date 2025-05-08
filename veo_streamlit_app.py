@@ -26,6 +26,10 @@ from google.auth.transport.requests import Request as GoogleAuthRequest
 from lyria import generate_lyria_music
 # Import Movie Creator tab function
 from moviecreator import movie_creator_tab
+# Import Prompt Builder tab function
+from promptbuilder import prompt_builder_tab
+# Import Standard Veo (v0) tab function
+from standard_veo_module import display_standard_veo_tab_from_v0
 
 # --- Configuration & Constants ---
 DEFAULT_PROJECT_ID = os.getenv("DEFAULT_PROJECT_ID", "veo-testing")
@@ -204,7 +208,7 @@ local_output_dir_input = st.sidebar.text_input("Local Output Directory", value=o
 st.sidebar.header("💾 Google Drive Output (Optional)")
 drive_folder_link_input = st.sidebar.text_input("Google Drive Folder Link", value=DEFAULT_DRIVE_FOLDER_LINK_ENV)
 
-tab_names = ["Standard Veo", "Veo Interpolation", "Veo Extension", "Veo Camera Controls", "Lyria Music", "🎬 Movie Creator"]
+tab_names = ["Standard Veo", "Veo Interpolation", "Veo Extension", "Veo Camera Controls", "✨ AI Prompt Builder", "Lyria Music", "🎬 Movie Creator"]
 tabs = st.tabs(tab_names)
 
 gcs_client = get_gcs_client()
@@ -265,58 +269,17 @@ def display_generated_videos(operation_result, current_local_output_dir, source_
             else: st.error(f"Failed to download {video_gcs_uri}")
         else: st.warning(f"Invalid or missing GCS URI for video sample {i+1}")
 
-with tabs[0]: # Standard Veo
-    st.header("Standard Veo Video Generation")
-    # UI elements specific to standard generation
-    std_prompt_input = st.text_area("Prompt (Standard Veo)", key="std_veo_prompt")
-    std_uploaded_image_files = st.file_uploader("Upload Image(s) (Standard Veo)", type=["png", "jpg", "jpeg"], accept_multiple_files=True, key="std_veo_img_upload")
-    std_image_urls_input = st.text_area("Or Paste Image URLs (Standard Veo)", key="std_veo_img_urls")
-    # Standard Veo parameters
-    col1, col2 = st.columns(2)
-    with col1:
-        std_seed_input = st.number_input("Seed", value=777, min_value=0, key="std_veo_seed")
-        std_aspect_ratio_input = st.selectbox("Aspect Ratio", options=["PORTRAIT", "LANDSCAPE"], index=1, key="std_veo_aspect") # Default LANDSCAPE
-    with col2:
-        std_sample_count_input = st.number_input("Sample Count", value=1, min_value=1, max_value=4, key="std_veo_samples")
-        std_duration_input = st.number_input("Duration (s)", value=8, min_value=1, max_value=60, key="std_veo_duration")
-    std_enhance_prompt_input = st.checkbox("Enhance Prompt", value=False, key="std_veo_enhance")
-
-    if st.button("Generate Standard Veo Video", key="std_veo_btn"):
-        # Logic from existing "Standard Generation" tab
-        current_project_id = project_id_input.strip()
-        current_gcs_bucket = output_gcs_bucket_input.strip()
-        current_local_dir = local_output_dir_input.strip()
-        if not all([current_project_id, current_gcs_bucket, current_local_dir]):
-            st.error("Project ID, GCS Bucket, and Local Output Directory must be set.")
-        elif not std_prompt_input.strip() and not std_uploaded_image_files and not std_image_urls_input.strip():
-            st.error("Provide a prompt, upload images, or paste image URLs for Standard Veo.")
-        else:
-            predict_ep = _PREDICT_API_ENDPOINT_STD.replace(DEFAULT_PROJECT_ID, current_project_id)
-            fetch_ep = _FETCH_API_ENDPOINT_STD.replace(DEFAULT_PROJECT_ID, current_project_id)
-            params = {"storageUri": f"gs://{current_gcs_bucket}/video_outputs_std/", "sampleCount": std_sample_count_input, "seed": std_seed_input,
-                      "aspectRatio": "16:9" if std_aspect_ratio_input == "LANDSCAPE" else "9:16", "durationSeconds": std_duration_input, 
-                      "enhancePrompt": std_enhance_prompt_input, "personGeneration": "allow_adult"}
-            
-            img_sources = []
-            if std_uploaded_image_files: img_sources.extend([{"type": "file", "data": f, "name": f.name} for f in std_uploaded_image_files])
-            if std_image_urls_input.strip(): img_sources.extend([{"type": "url", "data": url, "name": f"url_{i}"} for i, url in enumerate(std_image_urls_input.strip().splitlines()) if url.strip()])
-
-            if not img_sources and std_prompt_input.strip():
-                op_result = generate_veo_video(current_project_id, predict_ep, fetch_ep, std_prompt_input.strip(), params)
-                display_generated_videos(op_result, current_local_dir, "std_veo_prompt")
-            elif img_sources:
-                for src in img_sources:
-                    gcs_img_uri = None
-                    if src["type"] == "file": gcs_img_uri = handle_file_upload_to_gcs(src["data"], current_gcs_bucket, IMAGE_UPLOAD_GCS_PREFIX)
-                    elif src["type"] == "url":
-                        local_path = download_image_from_url(src["data"]);
-                        if local_path: gcs_img_uri, _ = upload_to_gcs(gcs_client, current_gcs_bucket, local_path, IMAGE_UPLOAD_GCS_PREFIX); os.remove(local_path)
-                    if gcs_img_uri:
-                        op_result = generate_veo_video(current_project_id, predict_ep, fetch_ep, std_prompt_input.strip(), params, image_uri=gcs_img_uri)
-                        display_generated_videos(op_result, current_local_dir, f"std_veo_{src['name']}")
-                    else: st.error(f"Failed to process image {src['name']}")
-            else: st.error("No valid input for Standard Veo generation.")
-
+with tabs[0]: # Standard Veo (now using v0 logic)
+    display_standard_veo_tab_from_v0(
+        main_project_id=project_id_input.strip(),
+        main_output_gcs_bucket=output_gcs_bucket_input.strip(),
+        main_local_output_dir=local_output_dir_input.strip(),
+        main_drive_folder_link=drive_folder_link_input.strip(),
+        main_gcs_client=gcs_client, # Pass the initialized GCS client
+        main_get_drive_service_func=get_drive_service, # Pass the function itself
+        main_extract_folder_id_from_link_func=extract_folder_id_from_link # Pass the function
+        # The v0 module will use its own API calling and processing logic for now.
+    )
 
 with tabs[1]: # Veo Interpolation
     st.header("Veo Interpolation")
@@ -395,7 +358,10 @@ with tabs[3]: # Veo Camera Controls
                 display_generated_videos(op_result, current_local_dir, f"cam_{cam_control_type}_video")
             else: st.error("Failed to upload image for camera control.")
 
-with tabs[4]: # Lyria Music Generation
+with tabs[4]: # AI Prompt Builder
+    prompt_builder_tab()
+
+with tabs[5]: # Lyria Music Generation
     st.header("Lyria Music Generation")
     lyria_prompt = st.text_area("Music Prompt", placeholder="e.g., Epic cinematic score", key="lyria_prompt")
     lyria_neg_prompt = st.text_area("Negative Prompt (Optional)", placeholder="e.g., Off-key, noisy", key="lyria_neg_prompt")
@@ -425,7 +391,7 @@ with tabs[4]: # Lyria Music Generation
             else:
                 st.error("Lyria music generation failed or returned no samples.")
 
-with tabs[5]: # Movie Creator Tab
+with tabs[6]: # Movie Creator Tab
     movie_creator_tab()
 
 st.markdown("---")

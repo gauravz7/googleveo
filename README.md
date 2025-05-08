@@ -41,6 +41,17 @@ This Streamlit application allows users to generate videos using Google's Veo mo
     -   `.gitignore` to exclude sensitive files and local artifacts.
     -   Modular code with `lyria.py` for music generation logic.
 
+## Key Code Modules
+
+-   **`veo_streamlit_app.py`**: The main Streamlit application. It sets up the overall page configuration, sidebar for global settings (GCP Project ID, GCS bucket, local output directory, Drive link), and orchestrates the different tabs. It also contains common helper functions for GCS, Google Drive, and calling Veo APIs.
+-   **`standard_veo_module.py`**: Contains the UI and logic for the "Standard Veo" generation tab. This module was adapted from `v0-streamlit.py` and handles image/URL uploads, prompt input, and calls to the Veo API for standard text-to-video and image-to-video generation. It uses helper functions primarily from `veo_streamlit_app.py` passed as arguments.
+-   **`promptbuilder.py`**: Implements the "✨ AI Prompt Builder" tab. This module allows users to upload an image and provide a text idea, then calls the Vertex AI Gemini model to generate an enhanced, descriptive prompt suitable for video generation.
+-   **`moviecreator.py`**: Powers the "🎬 Movie Creator" tab. It allows users to upload multiple video clips, add word-by-word animated text overlays with font selection, adjust video playback tempo for each clip, and combine them into a single movie with optional background audio.
+-   **`lyria.py`**: Handles the logic for the "Lyria Music" generation tab, interfacing with the Lyria model on Vertex AI to generate music from text prompts.
+-   **`.env`**: Used to store environment variables like GCP project IDs, GCS bucket names, and API keys. This file is not committed to Git (see `.gitignore`).
+-   **`requirements.txt`**: Lists all Python dependencies required for the project.
+-   **`Dockerfile` & `.dockerignore`**: (If present) Files for building a Docker container image of the application, suitable for deployment (e.g., to Google Cloud Run).
+
 ## Setup
 
 1.  **Clone the Repository (or set up your local copy):**
