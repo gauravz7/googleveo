@@ -75,12 +75,22 @@ This Streamlit application allows users to generate videos using Google's Veo mo
     -   `credentials.json` is ignored by git.
 
 5.  **Install Dependencies:**
-    -   It's recommended to use a Python virtual environment.
+    -   It's recommended to use a Python virtual environment. For this project, Python 3.12 is used.
     ```bash
-    python -m venv venv
-    source venv/bin/activate  # On Windows: venv\Scripts\activate
+    python3.12 -m venv .venv
+    source .venv/bin/activate  # On Windows: .venv\Scripts\activate
     pip install -r requirements.txt
     ```
+    -   If you are on macOS and need Ruby (e.g., for certain gems or tools that might be indirectly used or if you plan to extend with Ruby-based tools):
+    ```bash
+    brew install ruby
+    ```
+    -   For video processing capabilities, ensure FFmpeg and ImageMagick are installed. On macOS, you can install them via Homebrew:
+    ```bash
+    brew install ffmpeg
+    brew install imagemagick
+    ```
+    *Note: ImageMagick is required for text rendering in `moviepy` version 1.0.3, which this project currently uses.*
 
 ## Running the Application
 

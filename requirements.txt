@@ -7,3 +7,5 @@ google-auth-httplib2
 google-auth-oauthlib
 python-dotenv
 Pillow
+moviepy==1.0.3
+decorator==4.4.2
