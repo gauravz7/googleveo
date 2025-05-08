@@ -101,14 +101,27 @@ This Streamlit application allows users to generate videos using Google's Veo mo
 
 ## Running the Application
 
-1.  Ensure your `.env` file is configured and `credentials.json` (if using Drive) is in place.
-2.  Run the Streamlit app:
+1.  Ensure your Python virtual environment (`.venv`) is activated:
+    ```bash
+    source .venv/bin/activate  # On macOS/Linux
+    # .venv\Scripts\activate    # On Windows
+    ```
+2.  Ensure all dependencies are installed (as per the "Install Dependencies" section):
+    ```bash
+    pip install -r requirements.txt
+    ```
+3.  Ensure your `.env` file is configured and `credentials.json` (if using Drive) is in place.
+4.  Run the Streamlit app:
     ```bash
     streamlit run veo_streamlit_app.py
     ```
-3.  Open the provided local URL in your browser.
-4.  Select the desired generation tab (Standard Veo, Veo Advanced Features, Lyria Music).
-5.  Configure parameters in the sidebar and within the tab, then click the generate button.
+    Alternatively, you can combine activation (if not already active) and running in one go (for macOS/Linux):
+    ```bash
+    source .venv/bin/activate && streamlit run veo_streamlit_app.py
+    ```
+5.  Open the provided local URL in your browser.
+6.  Select the desired generation tab (Standard Veo, Veo Advanced Features, Lyria Music, or Movie Creator).
+7.  Configure parameters in the sidebar and within the tab, then click the generate button.
     -   If using Google Drive upload for the first time, you'll be guided through an authentication flow (copy URL, authorize, paste code back into the app). A `token.json` will be created to store your authorization for future sessions. `token.json` is ignored by git.
 
 ## Files to Keep Private
