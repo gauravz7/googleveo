@@ -12,6 +12,13 @@ This Streamlit application allows users to generate videos using Google's Veo mo
     -   **Interpolation:** Generate video by interpolating between a first and last uploaded frame.
     -   **Video Extension:** Extend an existing uploaded video by 4-7 seconds.
     -   **Camera Controls:** Apply specific camera movements (e.g., PAN_LEFT, PULL_OUT) to a video generated from a starting image.
+-   **Movie Creator Tab:**
+    -   Upload up to 10 video clips.
+    -   For each clip, add text that appears word-by-word (animation speed adjustable).
+    -   Adjust playback tempo for each video clip (1.0x, 1.05x, 1.1x, 1.15x, 1.2x).
+    -   Select font for text overlays.
+    -   Optionally, upload a background audio file for the final combined movie.
+    -   Concatenates all processed clips into a single movie.
 -   **Lyria Music Generation (Tabbed Interface):**
     -   Generate music from text prompts.
     -   Option for negative prompts.

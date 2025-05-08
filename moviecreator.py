@@ -19,7 +19,11 @@ def animate_text_word_by_word(video_clip, text, font, fontsize=50, color='white'
     if not words:  # Handle empty text or text with only spaces
         return video_clip
         
-    duration_per_word = video_clip.duration / len(words)
+    # Adjust word appearance speed
+    base_duration_per_word = video_clip.duration / len(words)
+    # User requested 1.5x faster than original
+    speed_factor = 1.5 
+    duration_per_word = base_duration_per_word / speed_factor
     
     final_text_clips = []
     accumulated_words = ""
@@ -64,7 +68,7 @@ def movie_creator_tab():
 
     def add_video_input():
         if len(st.session_state.video_inputs) < 10:
-            st.session_state.video_inputs.append({"id": len(st.session_state.video_inputs) + 1, "file": None, "text": "", "font": AVAILABLE_FONTS[0]})
+            st.session_state.video_inputs.append({"id": len(st.session_state.video_inputs) + 1, "file": None, "text": "", "font": AVAILABLE_FONTS[0], "tempo": 1.0}) # Added tempo
         else:
             st.warning("Maximum of 10 video clips allowed.")
 
@@ -89,13 +93,37 @@ def movie_creator_tab():
         item_key_suffix = video_input_item["id"] 
         st.markdown(f"#### Video Clip {item_key_suffix}")
         
-        cols = st.columns([3, 2, 1])
-        with cols[0]:
+        cols_main = st.columns([3, 2, 1]) # Main columns for file, text, remove
+        with cols_main[0]:
             video_input_item["file"] = st.file_uploader(f"Upload Video Clip {item_key_suffix}", type=["mp4", "mov", "avi", "mkv"], key=f"video_file_{item_key_suffix}")
-        with cols[1]:
-            video_input_item["text"] = st.text_area(f"Text for Video {item_key_suffix} (appears word by word)", value=video_input_item.get("text", ""), key=f"video_text_{item_key_suffix}")
+        
+        text_font_col, tempo_col = cols_main[1].columns(2) # Sub-columns for text/font and tempo
+
+        with text_font_col:
+            video_input_item["text"] = st.text_area(f"Text for Video {item_key_suffix}", value=video_input_item.get("text", ""), key=f"video_text_{item_key_suffix}", height=100)
             video_input_item["font"] = st.selectbox(f"Font for Video {item_key_suffix}", AVAILABLE_FONTS, index=AVAILABLE_FONTS.index(video_input_item.get("font", AVAILABLE_FONTS[0])), key=f"video_font_{item_key_suffix}")
-        with cols[2]:
+        
+        with tempo_col:
+            tempo_options_display = ["Normal (1.0x)", "1.05x", "1.1x", "1.15x", "1.2x"]
+            tempo_options_values = [1.0, 1.05, 1.1, 1.15, 1.2]
+            selected_tempo_display = f"{video_input_item.get('tempo', 1.0)}x"
+            if video_input_item.get('tempo', 1.0) == 1.0:
+                selected_tempo_display = "Normal (1.0x)"
+
+            # Find current index for selectbox
+            current_tempo_value = video_input_item.get("tempo", 1.0)
+            try:
+                current_tempo_idx = tempo_options_values.index(current_tempo_value)
+            except ValueError:
+                current_tempo_idx = 0 # Default to Normal
+
+            selected_tempo_display_val = st.selectbox(f"Tempo for Video {item_key_suffix}", 
+                                                      options=tempo_options_display, 
+                                                      index=current_tempo_idx, 
+                                                      key=f"video_tempo_{item_key_suffix}")
+            video_input_item["tempo"] = tempo_options_values[tempo_options_display.index(selected_tempo_display_val)]
+
+        with cols_main[2]:
             st.markdown("## ") # Add some space for button alignment
             if st.button(f"🗑️ Remove Clip {item_key_suffix}", key=f"remove_video_{item_key_suffix}"):
                 remove_video_input(i) # Pass current list index for removal
@@ -137,6 +165,12 @@ def movie_creator_tab():
                         f.write(v_data["file"].getbuffer()) # Corrected this line
                     
                     video_clip_obj = VideoFileClip(temp_video_path)
+                    
+                    # Apply tempo adjustment
+                    tempo_factor = v_data.get("tempo", 1.0)
+                    if tempo_factor != 1.0:
+                        st.write(f"... applying tempo {tempo_factor}x")
+                        video_clip_obj = video_clip_obj.speedx(tempo_factor)
                     
                     if v_data["text"].strip():
                         video_clip_with_text = animate_text_word_by_word(video_clip_obj, v_data["text"], v_data["font"])
