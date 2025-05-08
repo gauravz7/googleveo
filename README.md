@@ -135,6 +135,102 @@ This Streamlit application allows users to generate videos using Google's Veo mo
 7.  Configure parameters in the sidebar and within the tab, then click the generate button.
     -   If using Google Drive upload for the first time, you'll be guided through an authentication flow (copy URL, authorize, paste code back into the app). A `token.json` will be created to store your authorization for future sessions. `token.json` is ignored by git.
 
+## Deploying to Google Cloud Run (Optional)
+
+This application can be containerized using Docker and deployed to Google Cloud Run.
+
+### Prerequisites:
+-   Google Cloud SDK installed and configured (`gcloud auth login`, `gcloud config set project YOUR_PROJECT_ID`).
+-   Docker installed.
+-   Your Google Cloud Project ID (let's call it `YOUR_PROJECT_ID`).
+-   A preferred Google Cloud region (e.g., `us-central1`, let's call it `YOUR_REGION`).
+-   Enable the Cloud Run API and Artifact Registry API (or Container Registry API) in your GCP project.
+
+### Steps:
+
+1.  **Build the Docker Image:**
+    Open your terminal in the project root directory and run:
+    ```bash
+    docker build -t veo-lyria-app .
+    ```
+    (You can replace `veo-lyria-app` with your preferred image name).
+
+2.  **Tag the Image for Artifact Registry (Recommended) or GCR:**
+    *   **Artifact Registry (Recommended):**
+        First, create a Docker repository in Artifact Registry if you haven't already (e.g., `veo-apps-repo`):
+        ```bash
+        gcloud artifacts repositories create veo-apps-repo \
+            --repository-format=docker \
+            --location=YOUR_REGION \
+            --description="Docker repository for Veo/Lyria apps"
+        ```
+        Then, tag your image:
+        ```bash
+        docker tag veo-lyria-app YOUR_REGION-docker.pkg.dev/YOUR_PROJECT_ID/veo-apps-repo/veo-lyria-app:latest
+        ```
+    *   **Google Container Registry (GCR - Legacy):**
+        ```bash
+        docker tag veo-lyria-app gcr.io/YOUR_PROJECT_ID/veo-lyria-app:latest
+        ```
+
+3.  **Push the Image:**
+    *   **Artifact Registry:**
+        Configure Docker to authenticate with Artifact Registry:
+        ```bash
+        gcloud auth configure-docker YOUR_REGION-docker.pkg.dev
+        ```
+        Push the image:
+        ```bash
+        docker push YOUR_REGION-docker.pkg.dev/YOUR_PROJECT_ID/veo-apps-repo/veo-lyria-app:latest
+        ```
+    *   **Google Container Registry (GCR):**
+        ```bash
+        docker push gcr.io/YOUR_PROJECT_ID/veo-lyria-app:latest
+        ```
+
+4.  **Deploy to Cloud Run:**
+    Replace `YOUR_SERVICE_NAME` (e.g., `veo-lyria-service`), `YOUR_PROJECT_ID`, `YOUR_REGION`, and the image path with your actual values.
+    ```bash
+    gcloud run deploy YOUR_SERVICE_NAME \
+        --image YOUR_REGION-docker.pkg.dev/YOUR_PROJECT_ID/veo-apps-repo/veo-lyria-app:latest \
+        # Or for GCR: --image gcr.io/YOUR_PROJECT_ID/veo-lyria-app:latest \
+        --platform managed \
+        --region YOUR_REGION \
+        --allow-unauthenticated \
+        --port 8501 \
+        --memory 2Gi \  # Adjust memory as needed, video processing can be memory intensive
+        --cpu 1         # Adjust CPU as needed
+        # Add other flags as necessary, e.g., for environment variables or secrets
+    ```
+
+5.  **Configure Environment Variables and Secrets on Cloud Run:**
+    The application relies on variables from an `.env` file and potentially a `credentials.json` file for Google Drive. These **should not** be included in the Docker image.
+    -   **Environment Variables:** For each variable in your `.env` file (e.g., `DEFAULT_PROJECT_ID`, `DEFAULT_OUTPUT_GCS_BUCKET`, `CLIENT_SECRETS_FILE`), set them directly in the Cloud Run service configuration. For `CLIENT_SECRETS_FILE`, you'd set its value to the path where the secret will be mounted (e.g., `/app/credentials.json`).
+        Example:
+        ```bash
+        gcloud run services update YOUR_SERVICE_NAME \
+            --update-env-vars DEFAULT_PROJECT_ID=your-veo-gcp-project-id,DEFAULT_LYRIA_PROJECT_ID=your-lyria-gcp-project-id,DEFAULT_OUTPUT_GCS_BUCKET=your-gcs-bucket-name,CLIENT_SECRETS_FILE=/app/credentials.json 
+            # Add other variables as needed from your .env (GEMINI_MODEL_NAME, GCP_REGION etc.)
+        ```
+    -   **Secrets (for `credentials.json`):**
+        1.  Store your `credentials.json` content in Google Cloud Secret Manager. For example, create a secret named `google-drive-credentials`.
+        2.  Grant the Cloud Run service account permission to access this secret (e.g., "Secret Manager Secret Accessor" role).
+        3.  Mount the secret as a file in your Cloud Run service. When deploying or updating, use the `--update-secrets` flag:
+            ```bash
+            gcloud run deploy YOUR_SERVICE_NAME \
+                --image YOUR_REGION-docker.pkg.dev/YOUR_PROJECT_ID/veo-apps-repo/veo-lyria-app:latest \
+                # ... other flags ...
+                --update-secrets="/app/credentials.json=google-drive-credentials:latest"
+            ```
+            Or for an existing service:
+            ```bash
+            gcloud run services update YOUR_SERVICE_NAME \
+                --update-secrets="/app/credentials.json=google-drive-credentials:latest"
+            ```
+            This makes the content of the `google-drive-credentials` secret available at the path `/app/credentials.json` inside your container.
+
+    After deployment, Cloud Run will provide a URL to access your application. Remember that the OAuth flow for Google Drive might need its redirect URI updated in your GCP OAuth Client ID configuration if you are accessing Cloud Run via its public URL (e.g., `https://your-service-name-xyz-uc.a.run.app`).
+
 ## Files to Keep Private
 
 -   `.env`

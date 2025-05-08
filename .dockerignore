@@ -1,0 +1,40 @@
+# Git
+.git/
+.gitignore
+
+# Docker
+Dockerfile
+.dockerignore
+
+# Python virtual environment
+.venv/
+venv/
+env/
+*.env/
+
+# Python cache & compiled files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Local output and temporary directories
+Output/
+temp_media/
+temp_images/ # If this directory is used
+
+# Streamlit specific (if any local state not needed in image)
+# .streamlit/ # Usually small, but can be ignored if needed
+
+# IDE and OS specific
+.vscode/
+.idea/
+*.DS_Store
+
+# Sensitive files (should be managed via secrets/env vars in Cloud Run)
+.env
+credentials.json
+token.json
+
+# Test files (if any, and not needed in production image)
+# tests/
+# *.test.py
