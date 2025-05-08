@@ -1,0 +1,33 @@
+# Environment variables
+.env
+
+# Google OAuth credentials and tokens
+credentials.json
+token.json
+
+# Python virtual environment
+venv/
+*.venv/
+env/
+.env/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Local output and temporary directories (optional, but good practice)
+Output/
+temp_images/
+*.mp4
+*.jpeg
+*.jpg
+*.png
+
+# Streamlit specific
+.streamlit/
+
+# IDE and OS specific
+.vscode/
+.idea/
+*.DS_Store
